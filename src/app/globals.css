@@ -1,26 +1,393 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap");
 @import "tailwindcss";
 
+/* ============================================================
+   ATELIER STORE — DESIGN SYSTEM
+   Visual reference: Gucci.com aesthetic
+   ============================================================
+   Token layers:
+     1. @font-face imports (Cormorant Garamond + DM Sans via Google)
+     2. Primitive tokens — raw values
+     3. Semantic tokens — purpose-named aliases
+     4. @theme — Tailwind v4 theme extension
+     5. Base resets & typographic defaults
+   ============================================================ */
+
+/* ── 1. TYPOGRAPHY IMPORTS ──────────────────────────────── */
+
+/*
+  Primary serif: Cormorant Garamond
+  → Fills the role of Gucci's editorial serif (Granjon-lineage);
+    high contrast thick/thin strokes, ideal for headlines & hero text.
+
+  Secondary sans: DM Sans
+  → Clean, neutral, geometric sans used for UI labels, nav, body copy,
+    prices & buttons — equivalent to Gucci Sans Pro's digital utility role.
+*/
+
+/* ── 2. PRIMITIVE TOKENS ────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* --- Colors: Neutral core (Gucci: pure black/white foundation) --- */
+  --color-black:         #000000;
+  --color-white:         #ffffff;
+  --color-off-white:     #faf9f7;  /* warm ivory — page background */
+  --color-parchment:     #f2ede6;  /* editorial section backgrounds */
+  --color-stone:         #e8e3db;  /* subtle border, divider */
+  --color-ash:           #c8c2ba;  /* muted text, placeholders */
+  --color-charcoal:      #3a3530;  /* secondary text */
+  --color-ink:           #1a1714;  /* primary text (near-black, warm) */
+
+  /* --- Colors: Brand accents (Gucci signature palette) --- */
+  --color-gucci-red:     #a11826;  /* primary accent — CTAs, badges */
+  --color-gucci-green:   #1a3d2e;  /* secondary accent — hover tints */
+  --color-gold:          #b8962e;  /* luxury accent — borders, icons */
+  --color-gold-light:    #d4af6a;  /* light gold — hover/shimmer state */
+
+  /* --- Typography: Primitive scale (8pt grid, Minor Third 1.2×) --- */
+  --font-serif:          'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans:           'DM Sans', system-ui, sans-serif;
+
+  --text-2xs:   0.625rem;   /* 10px — fine print, badges */
+  --text-xs:    0.75rem;    /* 12px — labels, nav meta */
+  --text-sm:    0.875rem;   /* 14px — body small, captions */
+  --text-base:  1rem;       /* 16px — body default */
+  --text-md:    1.125rem;   /* 18px — lead paragraph */
+  --text-lg:    1.25rem;    /* 20px — subheading */
+  --text-xl:    1.5rem;     /* 24px — card headings */
+  --text-2xl:   1.875rem;   /* 30px — section headings */
+  --text-3xl:   2.5rem;     /* 40px — page headings */
+  --text-4xl:   3.5rem;     /* 56px — hero headings (desktop) */
+  --text-5xl:   5rem;       /* 80px — editorial hero (large desktop) */
+
+  --leading-tight:    1.15;
+  --leading-snug:     1.3;
+  --leading-normal:   1.55;
+  --leading-relaxed:  1.75;  /* Gucci body copy — airy luxury feel */
+
+  /* Tracking — Gucci hallmark: wide-spaced uppercase labels/nav */
+  --tracking-ultra:   0.25em;   /* hero eyebrow labels */
+  --tracking-wide:    0.15em;   /* nav items, CTA text */
+  --tracking-normal:  0.05em;   /* product labels, prices */
+  --tracking-tight:   -0.01em;  /* body copy optical correction */
+
+  /* --- Spacing: 4px base grid --- */
+  --space-1:   0.25rem;    /* 4px */
+  --space-2:   0.5rem;     /* 8px */
+  --space-3:   0.75rem;    /* 12px */
+  --space-4:   1rem;       /* 16px */
+  --space-5:   1.25rem;    /* 20px */
+  --space-6:   1.5rem;     /* 24px */
+  --space-8:   2rem;       /* 32px */
+  --space-10:  2.5rem;     /* 40px */
+  --space-12:  3rem;       /* 48px */
+  --space-16:  4rem;       /* 64px */
+  --space-20:  5rem;       /* 80px */
+  --space-24:  6rem;       /* 96px */
+  --space-32:  8rem;       /* 128px */
+
+  /* --- Layout --- */
+  --container-max:     1440px;   /* Gucci desktop max-width */
+  --container-prose:   720px;    /* editorial text columns */
+  --container-padding: var(--space-8);  /* horizontal page gutter (desktop) */
+  --nav-height:        72px;     /* sticky nav height */
+
+  /* --- Product cards --- */
+  --card-ratio:         3 / 4;   /* 3:4 portrait — fashion industry standard */
+  --card-padding:       var(--space-4);
+
+  /* --- Borders & radius --- */
+  --border-hairline:  1px;
+  --border-fine:      1px solid var(--color-stone);       /* default divider */
+  --border-mid:       1px solid var(--color-ash);         /* card borders */
+  --border-accent:    1px solid var(--color-gold);        /* gold accent border */
+  --border-strong:    1px solid var(--color-ink);         /* input focus */
+  --radius-none:      0;         /* Gucci is predominantly 0 radius — square */
+  --radius-sm:        2px;       /* subtle rounding on chips only */
+
+  /* --- Transitions --- */
+  --ease-luxury:   cubic-bezier(0.25, 0.0, 0.0, 1.0);  /* slow start, decisive */
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 450ms;
+
+  /* --- Shadows (minimal — luxury avoids heavy shadows) --- */
+  --shadow-xs:  0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.08);
+  --shadow-hover: 0 8px 32px rgba(0,0,0,0.12);
 }
+
+/* ── 3. SEMANTIC TOKENS ─────────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg-page:        var(--color-off-white);
+  --bg-section-alt: var(--color-parchment);
+  --bg-nav:         var(--color-white);
+  --bg-overlay:     rgba(0, 0, 0, 0.45);
+  --bg-card:        var(--color-white);
+
+  /* Text */
+  --text-primary:   var(--color-ink);
+  --text-secondary: var(--color-charcoal);
+  --text-muted:     var(--color-ash);
+  --text-inverse:   var(--color-white);
+  --text-accent:    var(--color-gucci-red);
+  --text-price:     var(--color-ink);
+
+  /* Interactive */
+  --color-cta:        var(--color-black);
+  --color-cta-hover:  var(--color-gucci-red);
+  --color-link:       var(--color-ink);
+  --color-link-hover: var(--color-gucci-red);
+  --color-focus:      var(--color-gold);
+}
+
+/* ── 4. TAILWIND v4 THEME EXTENSION ────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts */
+  --font-serif: var(--font-serif);
+  --font-sans:  var(--font-sans);
+
+  /* Colors wired into Tailwind utilities */
+  --color-ink:         var(--color-ink);
+  --color-charcoal:    var(--color-charcoal);
+  --color-ash:         var(--color-ash);
+  --color-stone:       var(--color-stone);
+  --color-off-white:   var(--color-off-white);
+  --color-parchment:   var(--color-parchment);
+  --color-brand-red:   var(--color-gucci-red);
+  --color-brand-green: var(--color-gucci-green);
+  --color-gold:        var(--color-gold);
+  --color-gold-light:  var(--color-gold-light);
+
+  /* Background semantics */
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── 5. BASE RESETS & TYPOGRAPHIC DEFAULTS ───────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 300;               /* Gucci body weight: light */
+  line-height: var(--leading-relaxed);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Editorial serif headings (Gucci-style) */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+
+/* Headings: editorial sizing */
+h1 { font-size: var(--text-4xl); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl); }
+h5, h6 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-ultra);
+  text-transform: uppercase;     /* Gucci nav/label pattern: spaced caps */
+  color: var(--text-secondary);
+}
+
+p {
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Links: no underline by default, red on hover */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-luxury);
+}
+a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Focus ring: gold — accessible and on-brand */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* Horizontal rule: hairline, stone */
+hr {
+  border: none;
+  border-top: var(--border-fine);
+  margin: var(--space-16) 0;
+}
+
+/* Images: block, full-width by default */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── UTILITY CLASSES ────────────────────────────────────── */
+
+/* Uppercase tracked label — Gucci nav / category labels */
+.label-caps {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-ultra);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Serif editorial headline — hero/section titles */
+.heading-editorial {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+/* Page container — centred, max-width capped */
+.container-page {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-padding);
+}
+
+@media (max-width: 768px) {
+  .container-page {
+    padding-inline: var(--space-4);
+  }
+}
+
+/* Product card image — 3:4 portrait aspect ratio */
+.product-image-frame {
+  aspect-ratio: var(--card-ratio);
+  overflow: hidden;
+  background-color: var(--color-parchment);
+}
+
+.product-image-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--duration-slow) var(--ease-luxury);
+}
+
+.product-image-frame:hover img {
+  transform: scale(1.04);   /* Gucci subtle zoom on hover */
+}
+
+/* CTA Button — primary: black fill, red hover */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-8);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-none);   /* Gucci: square buttons */
+  cursor: pointer;
+  transition:
+    background-color var(--duration-base) var(--ease-luxury),
+    border-color var(--duration-base) var(--ease-luxury),
+    color var(--duration-base) var(--ease-luxury);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-gucci-red);
+  border-color: var(--color-gucci-red);
+}
+
+/* CTA Button — secondary: outlined, transparent fill */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-8);
+  background-color: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-base) var(--ease-luxury),
+    color var(--duration-base) var(--ease-luxury);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-ink);
+  color: var(--color-white);
+}
+
+/* Gold underline link — Gucci editorial body links */
+.link-underline {
+  position: relative;
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-normal);
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-ink);
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform var(--duration-base) var(--ease-luxury);
+}
+
+.link-underline:hover::after {
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+/* Divider: hairline stone, full-width */
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-stone);
+  margin-block: var(--space-12);
 }
