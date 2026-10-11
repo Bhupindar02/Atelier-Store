@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { HERO_CAMPAIGN } from '@/data/fashion-data';
 
 export default function HeroCampaign() {
@@ -46,17 +47,17 @@ export default function HeroCampaign() {
 
             {/* Action Buttons */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="#collections"
+              <Link
+                href="/new-arrivals"
                 className="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 bg-white text-[#1a1714] text-[11px] font-medium tracking-[0.22em] uppercase hover:bg-[#a11826] hover:text-white transition-all duration-300"
               >
-                {HERO_CAMPAIGN.primaryCta}
-              </a>
+                DISCOVER NEW ARRIVALS
+              </Link>
               <a
-                href="#products"
+                href="#collections"
                 className="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 bg-transparent text-white border border-white/60 text-[11px] font-medium tracking-[0.22em] uppercase hover:bg-white hover:text-[#1a1714] transition-all duration-300"
               >
-                {HERO_CAMPAIGN.secondaryCta}
+                EXPLORE COLLECTIONS
               </a>
             </div>
           </div>

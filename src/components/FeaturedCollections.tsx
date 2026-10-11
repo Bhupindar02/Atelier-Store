@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FEATURED_COLLECTIONS } from '@/data/fashion-data';
 
 export default function FeaturedCollections() {
@@ -60,13 +61,13 @@ export default function FeaturedCollections() {
                 </div>
 
                 <div className="pt-4 border-t border-[#e8e3db]/60 flex items-center justify-between">
-                  <a
-                    href="#products"
+                  <Link
+                    href={`/collections/${col.id === 'maroquinerie' ? 'handbags' : col.id === 'sartoriale' ? 'tailoring' : 'ready-to-wear'}`}
                     className="inline-flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase font-medium text-[#1a1714] group-hover:text-[#a11826] transition-colors"
                   >
                     <span>{col.linkText}</span>
                     <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                  </a>
+                  </Link>
                   <span className="text-[10px] font-mono text-[#8e857b]">
                     {col.itemCount} PIECES
                   </span>

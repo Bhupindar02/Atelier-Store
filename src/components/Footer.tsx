@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -60,11 +61,11 @@ export default function Footer() {
               The Maison
             </h4>
             <ul className="space-y-2.5 text-[#a0978d] font-light">
-              <li><a href="#editorial" className="hover:text-white transition-colors">History & Heritage</a></li>
-              <li><a href="#editorial" className="hover:text-white transition-colors">Florentine Workshops</a></li>
-              <li><a href="#editorial" className="hover:text-white transition-colors">Sustainability & Ethics</a></li>
-              <li><a href="#editorial" className="hover:text-white transition-colors">Artisanal Apprenticeship</a></li>
-              <li><a href="#editorial" className="hover:text-white transition-colors">Careers at Atelier</a></li>
+              <li><Link href="/new-arrivals" className="text-[#d4af6a] hover:text-white transition-colors font-medium">Nouvelles Créations (New Arrivals)</Link></li>
+              <li><Link href="/#editorial" className="hover:text-white transition-colors">History & Heritage</Link></li>
+              <li><Link href="/#editorial" className="hover:text-white transition-colors">Florentine Workshops</Link></li>
+              <li><Link href="/#editorial" className="hover:text-white transition-colors">Sustainability & Ethics</Link></li>
+              <li><Link href="/#editorial" className="hover:text-white transition-colors">Artisanal Apprenticeship</Link></li>
             </ul>
           </div>
 

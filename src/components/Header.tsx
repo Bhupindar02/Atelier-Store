@@ -28,11 +28,18 @@ export default function Header() {
             <span>COMPLIMENTARY WHITE-GLOVE DELIVERY OVER $500</span>
           </div>
           <div className="w-full sm:w-auto text-center sm:text-right flex items-center justify-center sm:justify-end gap-6 text-[10px]">
-            <span className="text-[#d4af6a] font-medium">SPRING 2026 CAMPAIGN LIVE</span>
+            <Link
+              href="/new-arrivals"
+              className="text-[#d4af6a] font-medium hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <span>SPRING 2026 DEBUT LIVE</span>
+              <span className="opacity-40">·</span>
+              <span className="underline decoration-[#d4af6a]/50 underline-offset-4">SHOP NEW ARRIVALS →</span>
+            </Link>
             <span className="hidden md:inline opacity-40">|</span>
-            <a href="#concierge" className="hidden md:inline hover:text-white transition-colors">
+            <Link href="/#concierge" className="hidden md:inline hover:text-white transition-colors">
               CLIENT SERVICES
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -65,22 +72,29 @@ export default function Header() {
           </div>
 
           {/* Desktop Left Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-[11px] uppercase tracking-[0.18em] font-medium text-[#3a3530]">
-            <a href="#collections" className="hover:text-[#a11826] transition-colors">
+          <nav className="hidden lg:flex items-center gap-6 text-[11px] uppercase tracking-[0.18em] font-medium text-[#3a3530]">
+            <Link
+              href="/new-arrivals"
+              className="text-[#a11826] font-semibold hover:opacity-80 transition-opacity flex items-center gap-1.5"
+            >
+              <span>New Arrivals</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#a11826]" />
+            </Link>
+            <Link href="/collections" className="hover:text-[#a11826] transition-colors">
               Collections
-            </a>
-            <a href="#products" className="hover:text-[#a11826] transition-colors">
+            </Link>
+            <Link href="/collections/handbags" className="hover:text-[#a11826] transition-colors">
               Maroquinerie
-            </a>
-            <a href="#products" className="hover:text-[#a11826] transition-colors">
+            </Link>
+            <Link href="/collections/tailoring" className="hover:text-[#a11826] transition-colors">
               Prêt-à-Porter
-            </a>
-            <a href="#spotlight" className="hover:text-[#a11826] transition-colors">
+            </Link>
+            <Link href="/#spotlight" className="hover:text-[#a11826] transition-colors">
               Masterpiece
-            </a>
-            <a href="#editorial" className="hover:text-[#a11826] transition-colors">
+            </Link>
+            <Link href="/#editorial" className="hover:text-[#a11826] transition-colors">
               Journal
-            </a>
+            </Link>
           </nav>
 
           {/* Center Brand Identity (Gucci / Saint Laurent inspired wordmark) */}
@@ -183,42 +197,59 @@ export default function Header() {
               </button>
             </div>
 
-            <div className="py-6 flex flex-col gap-5 text-sm tracking-[0.18em] uppercase font-medium text-[#1a1714]">
-              <a
-                href="#collections"
+            <div className="py-6 flex flex-col gap-4 text-xs tracking-[0.18em] uppercase font-medium text-[#1a1714]">
+              <Link
+                href="/new-arrivals"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2.5 border-b border-[#e8e3db]/80 text-[#a11826] font-semibold flex items-center justify-between"
+              >
+                <span>New Arrivals</span>
+                <span className="text-[9px] px-2 py-0.5 bg-[#a11826]/10 text-[#a11826] font-mono tracking-widest">
+                  2026 DEBUT
+                </span>
+              </Link>
+              <Link
+                href="/collections"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
               >
                 Featured Collections
-              </a>
-              <a
-                href="#products"
+              </Link>
+              <Link
+                href="/collections/handbags"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
               >
-                Product Gallery
-              </a>
-              <a
-                href="#spotlight"
+                Leather Goods
+              </Link>
+              <Link
+                href="/collections/tailoring"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
+              >
+                Tailoring & Ready-to-Wear
+              </Link>
+              <Link
+                href="/#spotlight"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
               >
                 Masterpiece Spotlight
-              </a>
-              <a
-                href="#editorial"
+              </Link>
+              <Link
+                href="/#editorial"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
               >
                 Atelier Journal
-              </a>
-              <a
-                href="#concierge"
+              </Link>
+              <Link
+                href="/#concierge"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
               >
                 Client Services & Boutiques
-              </a>
+              </Link>
             </div>
 
             <div className="mt-auto pt-6 border-t border-[#e8e3db] text-xs text-[#8e857b] space-y-3">

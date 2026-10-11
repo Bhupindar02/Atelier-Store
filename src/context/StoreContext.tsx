@@ -40,15 +40,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load initial demo items or local state gracefully
   useEffect(() => {
-    // Default 1 demo item in bag to show off luxury presentation if desired
-    try {
-      const savedCart = localStorage.getItem('atelier_cart');
-      const savedWishlist = localStorage.getItem('atelier_wishlist');
-      if (savedCart) setCart(JSON.parse(savedCart));
-      if (savedWishlist) setWishlistIds(JSON.parse(savedWishlist));
-    } catch {
-      // storage unavailable / fallback
-    }
+    // Defer state update out of synchronous effect execution to prevent cascading renders
+    const timer = setTimeout(() => {
+      try {
+        const savedCart = localStorage.getItem('atelier_cart');
+        const savedWishlist = localStorage.getItem('atelier_wishlist');
+        if (savedCart) setCart(JSON.parse(savedCart));
+        if (savedWishlist) setWishlistIds(JSON.parse(savedWishlist));
+      } catch {
+        // storage unavailable / fallback
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const addToCart = (product: Product, size?: string) => {
