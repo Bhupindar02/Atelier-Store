@@ -147,6 +147,20 @@ export default function Header() {
               )}
             </a>
 
+            {/* Client Account Link */}
+            <Link
+              href="/account"
+              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center gap-1.5 focus:outline-none"
+              aria-label="Client Account"
+            >
+              <svg className="w-4 h-4 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="square" strokeLinejoin="miter" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <span className="hidden xl:inline text-[10px] uppercase tracking-[0.16em] font-medium text-[#3a3530]">
+                Client
+              </span>
+            </Link>
+
             {/* Shopping Bag Trigger */}
             <button
               type="button"
@@ -206,6 +220,16 @@ export default function Header() {
                 <span>New Arrivals</span>
                 <span className="text-[9px] px-2 py-0.5 bg-[#a11826]/10 text-[#a11826] font-mono tracking-widest">
                   2026 DEBUT
+                </span>
+              </Link>
+              <Link
+                href="/account"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2.5 border-b border-[#e8e3db]/80 hover:text-[#a11826] transition-colors flex items-center justify-between"
+              >
+                <span>Client Portfolio</span>
+                <span className="text-[9px] px-2 py-0.5 bg-[#1a1714] text-white font-mono tracking-wider">
+                  ACCOUNT
                 </span>
               </Link>
               <Link

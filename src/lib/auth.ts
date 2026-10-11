@@ -1,4 +1,5 @@
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
+import { admin } from "better-auth/plugins/admin";
 import { APIError, createAuthEndpoint, sensitiveSessionMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { and, eq, ne } from "drizzle-orm";
@@ -97,6 +98,10 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: true,
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days persistent session
+    updateAge: 60 * 60 * 24, // Refresh token daily
+  },
   advanced: {
     ipAddress: {
       // Only trust reverse proxies when explicitly configured via TRUSTED_PROXIES
@@ -122,6 +127,15 @@ export const auth = betterAuth({
       }
     },
   },
-  plugins: [sessionRevocationPlugin],
+  plugins: [
+    admin({
+      defaultRole: "user",
+      adminRole: "admin",
+    }),
+    sessionRevocationPlugin,
+  ],
 });
+
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session.user;
 
