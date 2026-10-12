@@ -11,13 +11,14 @@ interface ProductDetailViewProps {
 }
 
 export default function ProductDetailView({ product }: ProductDetailViewProps) {
-  const { addToCart, toggleWishlist, isInWishlist } = useStore();
+  const { addToCart, toggleWishlist, isInWishlist, getItemQuantityInCart, getMaxAvailable } = useStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState(
     product.sizes ? product.sizes[0] : 'One Size'
   );
   const [activeAccordion, setActiveAccordion] = useState<string | null>('specs');
   const [isAddedSuccess, setIsAddedSuccess] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
   const wishlisted = isInWishlist(product.id);
   const gallery = product.gallery && product.gallery.length > 0
@@ -26,10 +27,24 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
   const relatedProducts = getRelatedProducts(product.id, 3);
 
+  const currentQuantityInCart = getItemQuantityInCart(product.id, selectedSize);
+  const maxAvailableStock = getMaxAvailable(product.id, product.stockState.remaining);
+  const isOutOfStock = maxAvailableStock <= 0;
+  const isMaxStockInCart = currentQuantityInCart >= maxAvailableStock;
+
   const handleAddToCart = () => {
-    addToCart(product, selectedSize);
-    setIsAddedSuccess(true);
-    setTimeout(() => setIsAddedSuccess(false), 2500);
+    const res = addToCart(product, selectedSize);
+    if (res.success) {
+      setIsAddedSuccess(true);
+      if (res.message) setFeedbackNotice(res.message);
+      setTimeout(() => {
+        setIsAddedSuccess(false);
+        setFeedbackNotice(null);
+      }, 3000);
+    } else {
+      setFeedbackNotice(res.message || 'Maximum inventory reached.');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+    }
   };
 
   const toggleAccordion = (section: string) => {
@@ -263,15 +278,36 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
             {/* ── ACTION BUTTONS: ACQUIRE / ADD TO BAG & WISHLIST ── */}
             <div className="space-y-3 pt-4">
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="w-full py-4.5 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-[#a11826] transition-all duration-300 shadow-md flex items-center justify-center gap-2"
-              >
-                <span>
-                  {isAddedSuccess ? 'Added to Bag ✓' : `Acquire — ${product.formattedPrice}`}
-                </span>
-              </button>
+              {feedbackNotice && (
+                <div className="p-3 bg-[#fdf2f2] border-l-2 border-[#a11826] text-[#a11826] text-xs font-light animate-fadeIn">
+                  {feedbackNotice}
+                </div>
+              )}
+
+              {isOutOfStock ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-4.5 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.25em] font-medium cursor-not-allowed shadow-none"
+                >
+                  Archive Unavailable · Out of Stock
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={isMaxStockInCart && !isAddedSuccess}
+                  className="w-full py-4.5 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-[#a11826] transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <span>
+                    {isAddedSuccess
+                      ? 'Added to Bag ✓'
+                      : isMaxStockInCart
+                      ? `In Bag (Max ${maxAvailableStock} Available)`
+                      : `Acquire — ${product.formattedPrice}`}
+                  </span>
+                </button>
+              )}
 
               <div className="flex gap-3">
                 <button

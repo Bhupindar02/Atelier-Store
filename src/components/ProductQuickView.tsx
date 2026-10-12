@@ -5,7 +5,15 @@ import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
 
 export default function ProductQuickView() {
-  const { quickViewProduct, closeQuickView, addToCart, toggleWishlist, isInWishlist } = useStore();
+  const {
+    quickViewProduct,
+    closeQuickView,
+    addToCart,
+    toggleWishlist,
+    isInWishlist,
+    getItemQuantityInCart,
+    getMaxAvailable,
+  } = useStore();
   const [activeImage, setActiveImage] = useState<0 | 1>(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
 
@@ -13,6 +21,11 @@ export default function ProductQuickView() {
 
   const currentSize = selectedSize || (quickViewProduct.sizes ? quickViewProduct.sizes[0] : 'One Size');
   const wishlisted = isInWishlist(quickViewProduct.id);
+
+  const currentQuantityInCart = getItemQuantityInCart(quickViewProduct.id, currentSize);
+  const maxAvailable = getMaxAvailable(quickViewProduct.id, quickViewProduct.stockState.remaining);
+  const isOutOfStock = maxAvailable <= 0;
+  const isMaxStockInCart = currentQuantityInCart >= maxAvailable;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -135,16 +148,29 @@ export default function ProductQuickView() {
 
               {/* Actions */}
               <div className="space-y-2.5 pt-4 border-t border-[#e8e3db]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    addToCart(quickViewProduct, currentSize);
-                    closeQuickView();
-                  }}
-                  className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors"
-                >
-                  Add to Shopping Bag — {quickViewProduct.formattedPrice}
-                </button>
+                {isOutOfStock ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-4 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.22em] font-medium cursor-not-allowed shadow-none"
+                  >
+                    Archive Unavailable · Out of Stock
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addToCart(quickViewProduct, currentSize);
+                      closeQuickView();
+                    }}
+                    disabled={isMaxStockInCart}
+                    className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isMaxStockInCart
+                      ? `In Bag (Max ${maxAvailable} Available)`
+                      : `Add to Shopping Bag — ${quickViewProduct.formattedPrice}`}
+                  </button>
+                )}
 
                 <button
                   type="button"
