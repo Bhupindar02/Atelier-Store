@@ -1,11 +1,13 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { requireAuth } from '@/lib/auth-server';
+import { getOrdersByUserId } from '@/db/queries/orders';
 import CustomerAccountDashboard from '@/components/CustomerAccountDashboard';
+import type { SerializedCustomerOrder } from '@/types/orders';
 
 export const metadata: Metadata = {
-  title: 'Client Portfolio | Maison Atelier',
-  description: 'Your private client portfolio, credentials, and salon preferences at Maison Atelier.',
+  title: 'Client Portfolio & Acquisitions | Maison Atelier',
+  description: 'Your private client portfolio, archival acquisitions, credentials, and salon preferences at Maison Atelier.',
 };
 
 interface AccountPageProps {
@@ -20,11 +22,55 @@ async function AccountContent({
   const session = await requireAuth('/account');
   const resolvedParams = await searchParams;
   const isUnauthorizedAdmin = resolvedParams.error === 'unauthorized_admin';
+  const isUnauthorizedOrder = resolvedParams.error === 'unauthorized_order';
+  const initialTab =
+    resolvedParams.tab === 'orders' ||
+    resolvedParams.tab === 'profile' ||
+    resolvedParams.tab === 'preferences' ||
+    resolvedParams.tab === 'security'
+      ? resolvedParams.tab
+      : undefined;
+
+  // Authoritatively fetch ONLY orders belonging to the authenticated customer
+  const userOrders = await getOrdersByUserId(session.user.id);
+
+  const serializedOrders: SerializedCustomerOrder[] = userOrders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    userId: order.userId,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    stripeSessionId: order.stripeSessionId,
+    stripePaymentIntentId: order.stripePaymentIntentId,
+    customerEmail: order.customerEmail,
+    customerName: order.customerName,
+    currency: order.currency,
+    subtotalCents: order.subtotalCents,
+    shippingFeeCents: order.shippingFeeCents,
+    totalCents: order.totalCents,
+    shippingAddress: order.shippingAddress,
+    createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : String(order.createdAt),
+    updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : String(order.updatedAt),
+    items: order.items.map((item) => ({
+      id: item.id,
+      orderId: item.orderId,
+      productId: item.productId,
+      size: item.size,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+      lineTotalCents: item.lineTotalCents,
+      productSnapshot: item.productSnapshot,
+      createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : undefined,
+    })),
+  }));
 
   return (
     <CustomerAccountDashboard
       initialSession={session}
       isUnauthorizedAdmin={isUnauthorizedAdmin}
+      isUnauthorizedOrder={isUnauthorizedOrder}
+      initialOrders={serializedOrders}
+      initialTab={initialTab}
     />
   );
 }

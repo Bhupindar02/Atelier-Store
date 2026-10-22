@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrderBySessionId, getOrderById } from '@/db/queries/orders';
+import { getServerSession } from '@/lib/auth-server';
 
 export async function GET(request: Request) {
   try {
@@ -25,6 +26,17 @@ export async function GET(request: Request) {
         { success: false, message: 'Order record not found.' },
         { status: 404 }
       );
+    }
+
+    // Security: If querying by orderId and order belongs to a registered customer, verify authentication
+    if (orderId && !sessionId && order.userId) {
+      const session = await getServerSession();
+      if (!session || (session.user.id !== order.userId && session.user.role !== 'admin')) {
+        return NextResponse.json(
+          { success: false, message: 'Unauthorized to access this acquisition record.' },
+          { status: 403 }
+        );
+      }
     }
 
     return NextResponse.json({

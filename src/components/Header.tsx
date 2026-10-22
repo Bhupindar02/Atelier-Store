@@ -1,11 +1,12 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
+import { useSession } from '@/lib/auth-client';
 
 export default function Header() {
   const { cartCount, wishlistIds, openCart, openSearch } = useStore();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -161,6 +162,20 @@ export default function Header() {
               </span>
             </Link>
 
+            {/* Admin Console Shortcut */}
+            {isAdmin && (
+              <Link
+                href="/admin/products"
+                className="p-2 text-[#8c6b2d] hover:text-[#1a1714] transition-colors relative flex items-center gap-1.5 focus:outline-none"
+                aria-label="Admin Console"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#d4af6a] animate-pulse" />
+                <span className="hidden md:inline text-[10px] uppercase tracking-[0.16em] font-semibold text-[#8c6b2d] border-b border-[#d4af6a]/50">
+                  Admin
+                </span>
+              </Link>
+            )}
+
             {/* Shopping Bag Trigger */}
             <button
               type="button"
@@ -232,6 +247,21 @@ export default function Header() {
                   ACCOUNT
                 </span>
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/products"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2.5 border-b border-[#e8e3db]/80 text-[#8c6b2d] font-semibold flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#d4af6a] animate-pulse" />
+                    <span>Admin Console</span>
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-[#d4af6a]/15 text-[#8c6b2d] border border-[#d4af6a]/40 font-mono tracking-wider">
+                    CONSOLE
+                  </span>
+                </Link>
+              )}
               <Link
                 href="/collections"
                 onClick={() => setIsMobileMenuOpen(false)}

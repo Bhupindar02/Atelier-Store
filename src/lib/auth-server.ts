@@ -41,3 +41,20 @@ export async function requireAdmin(callbackUrl = '/admin'): Promise<Session> {
   }
   return session;
 }
+
+/**
+ * Asserts that the caller has an active session with the 'admin' role.
+ * Throws an explicit Error if unauthenticated or not an admin.
+ * Useful for Server Actions and API handlers.
+ */
+export async function assertAdminSession(): Promise<Session> {
+  const session = await getServerSession();
+  if (!session) {
+    throw new Error('Authentication required: No active session');
+  }
+  if (session.user.role !== 'admin') {
+    throw new Error('Unauthorized: Administrator privilege required');
+  }
+  return session;
+}
+

@@ -1,9 +1,12 @@
 import Stripe from 'stripe';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripeSecretKey =
+  process.env.STRIPE_SECRET_KEY ||
+  process.env.STRIPE_API_KEY ||
+  process.env.STRIPE_KEY;
 
 if (!stripeSecretKey && process.env.NODE_ENV === 'production') {
-  console.warn('STRIPE_SECRET_KEY is not defined in production environment.');
+  console.warn('Neither STRIPE_SECRET_KEY nor STRIPE_API_KEY is defined in production environment.');
 }
 
 export const stripe = stripeSecretKey
