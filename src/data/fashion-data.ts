@@ -17,7 +17,7 @@ export interface Product {
   sku: string;
   origin: string;
   stockState: {
-    status: 'in_stock' | 'low_stock' | 'preorder' | 'made_to_order';
+    status: 'in_stock' | 'low_stock' | 'preorder' | 'made_to_order' | 'out_of_stock';
     label: string;
     description: string;
     remaining?: number;

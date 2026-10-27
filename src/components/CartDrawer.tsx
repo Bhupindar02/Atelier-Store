@@ -131,13 +131,16 @@ export default function CartDrawer() {
               </div>
             ) : (
               cart.map((item, index) => {
+                const isOutOfStock = item.maxAvailable <= 0;
                 const isAtMaxStock = item.quantity >= item.maxAvailable;
                 const isLowStock = item.maxAvailable > 0 && item.maxAvailable <= 3;
 
                 return (
                   <div
                     key={`${item.productId}-${item.size}-${index}`}
-                    className="flex gap-4 pb-6 border-b border-[#e8e3db]/80 transition-all"
+                    className={`flex gap-4 pb-6 border-b border-[#e8e3db]/80 transition-all ${
+                      isOutOfStock ? 'opacity-85' : ''
+                    }`}
                   >
                     {/* Thumbnail */}
                     <Link
@@ -150,7 +153,9 @@ export default function CartDrawer() {
                         alt={item.product.name}
                         fill
                         sizes="80px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className={`object-cover group-hover:scale-105 transition-transform duration-300 ${
+                          isOutOfStock ? 'grayscale-[20%]' : ''
+                        }`}
                       />
                     </Link>
 
@@ -187,12 +192,17 @@ export default function CartDrawer() {
 
                         {/* Inventory & Stock Constraints */}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                          {isLowStock && (
+                          {isOutOfStock && (
+                            <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-0.5 bg-[#fce8e6] text-[#a11826] border border-[#a11826]/30">
+                              Sold Out · Remove from Bag
+                            </span>
+                          )}
+                          {!isOutOfStock && isLowStock && (
                             <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-0.5 bg-[#fef3c7] text-[#92400e] border border-[#f59e0b]/30">
                               Only {item.maxAvailable} Remaining
                             </span>
                           )}
-                          {isAtMaxStock && (
+                          {!isOutOfStock && isAtMaxStock && (
                             <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-0.5 bg-[#faf9f7] text-[#787065] border border-[#d6cfc5]">
                               Max Allocation
                             </span>
@@ -273,14 +283,24 @@ export default function CartDrawer() {
               </div>
 
               <div className="space-y-2">
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
-                  className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors flex items-center justify-center gap-2 text-center"
-                >
-                  <span>Proceed to Checkout</span>
-                  <span className="text-xs">→</span>
-                </Link>
+                {cart.some((item) => item.maxAvailable <= 0) ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-4 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.22em] font-medium cursor-not-allowed flex items-center justify-center gap-2 text-center"
+                  >
+                    <span>Remove Sold Out Items to Proceed</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/checkout"
+                    onClick={closeCart}
+                    className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors flex items-center justify-center gap-2 text-center"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <span className="text-xs">→</span>
+                  </Link>
+                )}
 
                 <Link
                   href="/cart"

@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { products, stocks, categories, orders } from '@/db/schema';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { normalizeStockState } from '@/db/queries/admin';
 
 export interface ActionResponse<T = unknown> {
   success: boolean;
@@ -98,42 +99,44 @@ export async function updateStockAction(
   try {
     const session = await assertAdminSession();
 
-    const normalizedQuantity = Math.max(0, Math.floor(quantity));
-    const computedStatus =
-      status ||
-      (normalizedQuantity === 0
-        ? 'out_of_stock'
-        : normalizedQuantity <= 3
-        ? 'low_stock'
-        : 'in_stock');
+    // Verify product exists
+    const product = await db.query.products.findFirst({
+      where: eq(products.id, productId),
+    });
+    if (!product) {
+      return {
+        success: false,
+        error: `Product "${productId}" not found.`,
+        timestamp: new Date().toISOString(),
+      };
+    }
 
-    const computedLabel =
-      label ||
-      (computedStatus === 'out_of_stock'
-        ? 'Out of Stock'
-        : computedStatus === 'low_stock'
-        ? `Only ${normalizedQuantity} Available`
-        : computedStatus === 'made_to_order'
-        ? 'Made to Order'
-        : 'In Stock · Atelier Ready');
+    const normalized = normalizeStockState({
+      productId,
+      quantity,
+      status,
+      label,
+      description: `Inventory maintained by ${session.user.name} (${session.user.email})`,
+    });
 
     await db
       .insert(stocks)
       .values({
         id: `stock_${productId}`,
         productId,
-        quantity: normalizedQuantity,
-        status: computedStatus,
-        label: computedLabel,
-        description: `Inventory maintained by ${session.user.name} (${session.user.email})`,
+        quantity: normalized.quantity,
+        status: normalized.status,
+        label: normalized.label,
+        description: normalized.description,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: stocks.productId,
         set: {
-          quantity: normalizedQuantity,
-          status: computedStatus,
-          label: computedLabel,
+          quantity: normalized.quantity,
+          status: normalized.status,
+          label: normalized.label,
+          description: normalized.description,
           updatedAt: new Date(),
         },
       });
@@ -143,16 +146,100 @@ export async function updateStockAction(
     revalidatePath('/admin/products');
     revalidatePath(`/products/${productId}`);
     revalidatePath('/');
+    revalidatePath('/collections');
 
     return {
       success: true,
-      message: `Stock for product ${productId} updated to ${normalizedQuantity} (${computedStatus}).`,
+      message: `Inventory for "${product.name}" updated to ${normalized.quantity} (${normalized.status.replace(/_/g, ' ')}).`,
       timestamp: new Date().toISOString(),
     };
   } catch (err) {
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to update stock',
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+export interface BatchStockUpdateItem {
+  productId: string;
+  quantity: number;
+  status?: string;
+  label?: string;
+}
+
+/**
+ * Batch updates multiple inventory records in one operation.
+ * Enforces admin role check and validates inputs server-side.
+ */
+export async function batchUpdateStockAction(
+  updates: BatchStockUpdateItem[]
+): Promise<ActionResponse<{ updatedCount: number }>> {
+  try {
+    const session = await assertAdminSession();
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return {
+        success: false,
+        error: 'No inventory updates provided.',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    let successCount = 0;
+    for (const item of updates) {
+      if (!item.productId) continue;
+
+      const normalized = normalizeStockState({
+        productId: item.productId,
+        quantity: item.quantity,
+        status: item.status,
+        label: item.label,
+        description: `Inventory batch maintained by ${session.user.name} (${session.user.email})`,
+      });
+
+      await db
+        .insert(stocks)
+        .values({
+          id: `stock_${item.productId}`,
+          productId: item.productId,
+          quantity: normalized.quantity,
+          status: normalized.status,
+          label: normalized.label,
+          description: normalized.description,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: stocks.productId,
+          set: {
+            quantity: normalized.quantity,
+            status: normalized.status,
+            label: normalized.label,
+            description: normalized.description,
+            updatedAt: new Date(),
+          },
+        });
+
+      successCount++;
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/admin/stock');
+    revalidatePath('/admin/products');
+    revalidatePath('/');
+    revalidatePath('/collections');
+
+    return {
+      success: true,
+      message: `Successfully updated ${successCount} inventory records.`,
+      data: { updatedCount: successCount },
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to execute batch stock update',
       timestamp: new Date().toISOString(),
     };
   }
@@ -538,26 +625,17 @@ export async function createProductAction(
     }
 
     // Stock & Availability
-    const stockQuantity = Math.max(0, Math.floor(input.stockQuantity ?? 10));
-    const stockStatus =
-      input.stockStatus ||
-      (stockQuantity === 0
-        ? 'out_of_stock'
-        : stockQuantity <= 3
-        ? 'low_stock'
-        : 'in_stock');
-    const stockLabel =
-      input.stockLabel?.trim() ||
-      (stockStatus === 'out_of_stock'
-        ? 'Out of Stock'
-        : stockStatus === 'low_stock'
-        ? `Only ${stockQuantity} Available`
-        : stockStatus === 'made_to_order'
-        ? 'Made to Order'
-        : 'In Stock · Atelier Ready');
-    const stockDescription =
-      input.stockDescription?.trim() ||
-      `Inventory maintained by ${session.user.name} (${session.user.email})`;
+    const normalizedStock = normalizeStockState({
+      productId: id,
+      quantity: input.stockQuantity ?? 10,
+      status: input.stockStatus,
+      label: input.stockLabel,
+      description: input.stockDescription || `Inventory maintained by ${session.user.name} (${session.user.email})`,
+    });
+    const stockQuantity = normalizedStock.quantity;
+    const stockStatus = normalizedStock.status;
+    const stockLabel = normalizedStock.label;
+    const stockDescription = normalizedStock.description;
 
     // 2. Insert product record
     await db.insert(products).values({
@@ -814,51 +892,32 @@ export async function updateProductAction(
         where: eq(stocks.productId, productId),
       });
 
-      const updatedQty =
-        input.stockQuantity !== undefined
-          ? Math.max(0, Math.floor(input.stockQuantity))
-          : (currentStock?.quantity ?? 0);
-
-      const updatedStatus =
-        input.stockStatus ||
-        (updatedQty === 0
-          ? 'out_of_stock'
-          : updatedQty <= 3
-          ? 'low_stock'
-          : (currentStock?.status || 'in_stock'));
-
-      const updatedLabel =
-        input.stockLabel?.trim() ||
-        (updatedStatus === 'out_of_stock'
-          ? 'Out of Stock'
-          : updatedStatus === 'low_stock'
-          ? `Only ${updatedQty} Available`
-          : updatedStatus === 'made_to_order'
-          ? 'Made to Order'
-          : 'In Stock · Atelier Ready');
+      const normalized = normalizeStockState({
+        productId,
+        quantity: input.stockQuantity !== undefined ? input.stockQuantity : (currentStock?.quantity ?? 0),
+        status: input.stockStatus || currentStock?.status,
+        label: input.stockLabel || currentStock?.label,
+        description: input.stockDescription || currentStock?.description || `Inventory maintained by ${session.user.name} (${session.user.email})`,
+      });
 
       await db
         .insert(stocks)
         .values({
           id: `stock_${productId}`,
           productId,
-          quantity: updatedQty,
-          status: updatedStatus,
-          label: updatedLabel,
-          description:
-            input.stockDescription?.trim() ||
-            `Inventory maintained by ${session.user.name} (${session.user.email})`,
+          quantity: normalized.quantity,
+          status: normalized.status,
+          label: normalized.label,
+          description: normalized.description,
           updatedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: stocks.productId,
           set: {
-            quantity: updatedQty,
-            status: updatedStatus,
-            label: updatedLabel,
-            description:
-              input.stockDescription?.trim() ||
-              `Inventory maintained by ${session.user.name} (${session.user.email})`,
+            quantity: normalized.quantity,
+            status: normalized.status,
+            label: normalized.label,
+            description: normalized.description,
             updatedAt: new Date(),
           },
         });

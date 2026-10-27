@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Product } from '@/data/fashion-data';
 import { useStore } from '@/context/StoreContext';
 import CraftsmanshipBanner from '@/components/CraftsmanshipBanner';
+import StockBadge from '@/components/StockBadge';
 
 interface NewArrivalsCatalogProps {
   initialProducts: Product[];
@@ -52,7 +53,10 @@ export default function NewArrivalsCatalog({
     // In Stock Only Filter
     if (inStockOnly) {
       result = result.filter(
-        (p) => p.stockState.status === 'in_stock' || p.stockState.status === 'low_stock'
+        (p) =>
+          p.stockState.status === 'in_stock' ||
+          p.stockState.status === 'low_stock' ||
+          p.stockState.status === 'made_to_order'
       );
     }
 
@@ -303,45 +307,58 @@ export default function NewArrivalsCatalog({
                     )}
 
                     {/* Standard Luxury Product Card */}
-                    <div
-                      className="group flex flex-col"
-                      onMouseEnter={() => setHoveredProductId(product.id)}
-                      onMouseLeave={() => setHoveredProductId(null)}
-                    >
-                      {/* 3:4 Portrait Image Frame */}
-                      <div className="relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-                        <Link href={`/products/${product.id}`} className="block absolute inset-0">
-                          <Image
-                            src={product.primaryImage}
-                            alt={product.name}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className={`object-cover transition-opacity duration-700 ease-in-out ${
-                              isHovered ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-                            }`}
-                          />
-                          <Image
-                            src={product.secondaryImage}
-                            alt={`${product.name} detail view`}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className={`object-cover transition-all duration-700 ease-in-out ${
-                              isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-                            }`}
-                          />
-                        </Link>
+                    {(() => {
+                      const isOutOfStock = product.stockState.status === 'out_of_stock';
 
-                        {/* Badges */}
-                        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
-                          <div className="bg-[#11100e] text-[#f2ede6] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium shadow-sm">
-                            NEW ARRIVAL
-                          </div>
-                          {product.badge && product.badge !== 'NEW ARRIVAL' && (
-                            <div className="bg-[#d4af6a] text-[#11100e] px-2 py-0.5 text-[8px] tracking-[0.2em] uppercase font-semibold">
-                              {product.badge}
+                      return (
+                        <div
+                          className="group flex flex-col"
+                          onMouseEnter={() => setHoveredProductId(product.id)}
+                          onMouseLeave={() => setHoveredProductId(null)}
+                        >
+                          {/* 3:4 Portrait Image Frame */}
+                          <div
+                            className={`relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all ${
+                              isOutOfStock ? 'opacity-85' : ''
+                            }`}
+                          >
+                            <Link href={`/products/${product.id}`} className="block absolute inset-0">
+                              <Image
+                                src={product.primaryImage}
+                                alt={product.name}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                className={`object-cover transition-opacity duration-700 ease-in-out ${
+                                  isHovered ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+                                } ${isOutOfStock ? 'grayscale-[20%]' : ''}`}
+                              />
+                              <Image
+                                src={product.secondaryImage}
+                                alt={`${product.name} detail view`}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                className={`object-cover transition-all duration-700 ease-in-out ${
+                                  isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
+                                } ${isOutOfStock ? 'grayscale-[20%]' : ''}`}
+                              />
+                            </Link>
+
+                            {/* Badges */}
+                            <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                              <div className="bg-[#11100e] text-[#f2ede6] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium shadow-sm">
+                                NEW ARRIVAL
+                              </div>
+                              {product.badge && product.badge !== 'NEW ARRIVAL' && (
+                                <div className="bg-[#d4af6a] text-[#11100e] px-2 py-0.5 text-[8px] tracking-[0.2em] uppercase font-semibold">
+                                  {product.badge}
+                                </div>
+                              )}
+                              <StockBadge
+                                status={product.stockState.status}
+                                remaining={product.stockState.remaining}
+                                variant="card-overlay"
+                              />
                             </div>
-                          )}
-                        </div>
 
                         {/* Wishlist Button */}
                         <button
@@ -373,13 +390,23 @@ export default function NewArrivalsCatalog({
                           >
                             Quick View
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => addToCart(product)}
-                            className="flex-1 py-2.5 bg-[#1a1714] text-white text-[9px] uppercase tracking-[0.2em] font-medium hover:bg-[#a11826] transition-colors"
-                          >
-                            Acquire
-                          </button>
+                          {isOutOfStock ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="flex-1 py-2.5 bg-[#e8e4dc] text-[#8e857b] text-[9px] uppercase tracking-[0.2em] font-medium cursor-not-allowed border border-[#d6cfc5]"
+                            >
+                              Sold Out
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => addToCart(product)}
+                              className="flex-1 py-2.5 bg-[#1a1714] text-white text-[9px] uppercase tracking-[0.2em] font-medium hover:bg-[#a11826] transition-colors"
+                            >
+                              Acquire
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -411,29 +438,33 @@ export default function NewArrivalsCatalog({
                             {product.color}
                           </span>
 
-                          <button
-                            type="button"
-                            onClick={() => addToCart(product)}
-                            className="text-[#1a1714] uppercase tracking-[0.16em] font-medium hover:text-[#a11826] transition-colors"
-                          >
-                            + Add to Bag
-                          </button>
+                          {isOutOfStock ? (
+                            <span className="text-[10px] text-[#8e857b] uppercase tracking-wider font-mono">
+                              Sold Out
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => addToCart(product)}
+                              className="text-[#1a1714] uppercase tracking-[0.16em] font-medium hover:text-[#a11826] transition-colors"
+                            >
+                              + Add to Bag
+                            </button>
+                          )}
                         </div>
 
                         {/* Stock Status Pill */}
-                        <div className="pt-1">
-                          <span
-                            className={`inline-block text-[9px] tracking-wider uppercase font-mono ${
-                              product.stockState.status === 'low_stock'
-                                ? 'text-[#a11826]'
-                                : 'text-[#8e857b]'
-                            }`}
-                          >
-                            {product.stockState.label}
-                          </span>
+                        <div className="pt-1 flex items-center justify-between">
+                          <StockBadge
+                            status={product.stockState.status}
+                            remaining={product.stockState.remaining}
+                            variant="pill"
+                          />
                         </div>
                       </div>
                     </div>
+                  );
+                })()}
                   </React.Fragment>
                 );
               })}

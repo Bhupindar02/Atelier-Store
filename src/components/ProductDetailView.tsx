@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Product, getRelatedProducts } from '@/data/fashion-data';
 import { useStore } from '@/context/StoreContext';
+import StockBadge from '@/components/StockBadge';
 
 interface ProductDetailViewProps {
   product: Product;
@@ -97,12 +98,21 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                 className="object-cover transition-all duration-700 ease-out"
               />
 
-              {/* Badge Overlay */}
-              {product.badge && (
-                <div className="absolute top-4 left-4 bg-[#11100e] text-[#faf9f7] px-3 py-1.5 text-[9px] uppercase tracking-[0.25em] font-medium shadow-sm">
-                  {product.badge}
-                </div>
-              )}
+              {/* Badges Overlay */}
+              <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
+                {product.badge && (
+                  <div className="bg-[#11100e] text-[#faf9f7] px-3 py-1.5 text-[9px] uppercase tracking-[0.25em] font-medium shadow-sm self-start">
+                    {product.badge}
+                  </div>
+                )}
+                {product.stockState && (
+                  <StockBadge
+                    status={product.stockState.status}
+                    remaining={product.stockState.remaining}
+                    variant="card-overlay"
+                  />
+                )}
+              </div>
 
               {/* Origin Stamp */}
               <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 text-[9px] uppercase tracking-[0.2em] font-medium text-[#1a1714] border border-[#e8e3db]">
@@ -227,6 +237,14 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                     <span className="text-[#b8962e]">✦</span>
                     <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#8a6e1a]">
                       {product.stockState.label}
+                    </span>
+                  </>
+                )}
+                {product.stockState.status === 'out_of_stock' && (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#8e857b]" />
+                    <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#8e857b]">
+                      {product.stockState.label || 'Out of Stock · Archive Request'}
                     </span>
                   </>
                 )}
@@ -450,45 +468,67 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {relatedProducts.map((rel) => (
-              <Link
-                key={rel.id}
-                href={`/products/${rel.id}`}
-                className="group flex flex-col"
-              >
-                <div className="relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]">
-                  <Image
-                    src={rel.primaryImage}
-                    alt={rel.name}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  {rel.badge && (
-                    <div className="absolute top-3 left-3 bg-[#11100e] text-[#faf9f7] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium">
-                      {rel.badge}
-                    </div>
-                  )}
-                </div>
+            {relatedProducts.map((rel) => {
+              const isRelOutOfStock = rel.stockState?.status === 'out_of_stock';
 
-                <div className="pt-4 space-y-1">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-[9px] uppercase tracking-[0.25em] text-[#8e857b]">
-                      {rel.categoryLabel}
-                    </span>
-                    <span className="font-mono text-xs font-medium text-[#1a1714]">
-                      {rel.formattedPrice}
-                    </span>
+              return (
+                <Link
+                  key={rel.id}
+                  href={`/products/${rel.id}`}
+                  className={`group flex flex-col ${isRelOutOfStock ? 'opacity-85' : ''}`}
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]">
+                    <Image
+                      src={rel.primaryImage}
+                      alt={rel.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
+                        isRelOutOfStock ? 'grayscale-[20%]' : ''
+                      }`}
+                    />
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                      {rel.badge && (
+                        <div className="bg-[#11100e] text-[#faf9f7] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium self-start shadow-sm">
+                          {rel.badge}
+                        </div>
+                      )}
+                      {rel.stockState && (
+                        <StockBadge
+                          status={rel.stockState.status}
+                          remaining={rel.stockState.remaining}
+                          variant="card-overlay"
+                        />
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-serif text-lg text-[#1a1714] group-hover:text-[#a11826] transition-colors">
-                    {rel.name}
-                  </h3>
-                  <p className="text-[11px] text-[#70675e] truncate">
-                    {rel.material}
-                  </p>
-                </div>
-              </Link>
-            ))}
+
+                  <div className="pt-4 space-y-1">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[9px] uppercase tracking-[0.25em] text-[#8e857b]">
+                        {rel.categoryLabel}
+                      </span>
+                      <span className="font-mono text-xs font-medium text-[#1a1714]">
+                        {rel.formattedPrice}
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-lg text-[#1a1714] group-hover:text-[#a11826] transition-colors">
+                      {rel.name}
+                    </h3>
+                    <div className="flex items-center justify-between text-[11px] text-[#70675e]">
+                      <span className="truncate">{rel.material}</span>
+                      {rel.stockState && (
+                        <StockBadge
+                          status={rel.stockState.status}
+                          remaining={rel.stockState.remaining}
+                          variant="pill"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/auth-server';
-import { getAdminStocks } from '@/db/queries/admin';
+import { getAdminStocks, getAdminCategories } from '@/db/queries/admin';
 import AdminStockTable from '@/components/admin/AdminStockTable';
 
 export const instant = false;
@@ -13,7 +13,10 @@ export default async function AdminStockPage() {
   // Defense-in-depth: explicit server-side admin verification
   await requireAdmin('/admin/stock');
 
-  const stockList = await getAdminStocks();
+  const [stockList, categoryList] = await Promise.all([
+    getAdminStocks(),
+    getAdminCategories(),
+  ]);
 
   const totalUnits = stockList.reduce((acc, s) => acc + s.quantity, 0);
   const lowStockCount = stockList.filter(
@@ -55,7 +58,7 @@ export default async function AdminStockPage() {
       </div>
 
       {/* Stock Table Component */}
-      <AdminStockTable initialStocks={stockList} />
+      <AdminStockTable initialStocks={stockList} categories={categoryList} />
     </div>
   );
 }

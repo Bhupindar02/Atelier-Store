@@ -65,10 +65,11 @@ export async function POST(request: Request) {
       }
 
       // Stock validation gate before initiating checkout
+      const isMadeToOrder = product.stockState?.status === 'made_to_order';
       const maxAvailable =
         typeof product.stockState?.remaining === 'number'
-          ? product.stockState.remaining
-          : 0;
+          ? (isMadeToOrder && product.stockState.remaining === 0 ? 5 : product.stockState.remaining)
+          : (isMadeToOrder ? 5 : 0);
 
       if (maxAvailable <= 0) {
         return NextResponse.json(

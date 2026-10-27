@@ -54,11 +54,69 @@ export interface AdminStockSummary {
   productSku: string;
   productImage: string;
   price: number;
+  categoryId: string;
+  categoryName: string;
   quantity: number;
   status: string;
   label: string;
   description: string;
   updatedAt: Date;
+}
+
+export interface NormalizeStockParams {
+  productId: string;
+  quantity: number;
+  status?: string;
+  label?: string;
+  description?: string;
+}
+
+export interface NormalizedStockState {
+  quantity: number;
+  status: 'in_stock' | 'low_stock' | 'made_to_order' | 'out_of_stock';
+  label: string;
+  description: string;
+}
+
+/**
+ * Validates and normalizes stock inputs ensuring strict quantity and status alignment.
+ */
+export function normalizeStockState(params: NormalizeStockParams): NormalizedStockState {
+  const safeQuantity = isNaN(params.quantity) ? 0 : Math.max(0, Math.floor(params.quantity));
+
+  let computedStatus: 'in_stock' | 'low_stock' | 'made_to_order' | 'out_of_stock';
+  if (params.status === 'made_to_order') {
+    computedStatus = 'made_to_order';
+  } else if (safeQuantity === 0) {
+    computedStatus = 'out_of_stock';
+  } else if (safeQuantity <= 3) {
+    computedStatus = 'low_stock';
+  } else {
+    computedStatus = 'in_stock';
+  }
+
+  let defaultLabel: string;
+  if (computedStatus === 'out_of_stock') {
+    defaultLabel = 'Out of Stock · Archive Request';
+  } else if (computedStatus === 'low_stock') {
+    defaultLabel = `Only ${safeQuantity} Available`;
+  } else if (computedStatus === 'made_to_order') {
+    defaultLabel = 'Made to Order · Bespoke Commission';
+  } else {
+    defaultLabel = 'In Stock · Atelier Ready';
+  }
+
+  const label = params.label?.trim() ? params.label.trim().slice(0, 100) : defaultLabel;
+  const description =
+    params.description?.trim() ||
+    'Complimentary temperature-controlled white-glove courier delivery.';
+
+  return {
+    quantity: safeQuantity,
+    status: computedStatus,
+    label,
+    description,
+  };
 }
 
 export interface AdminOrderSummary {
@@ -275,7 +333,11 @@ export async function getAdminStocks(): Promise<AdminStockSummary[]> {
 
     const rows = await db.query.stocks.findMany({
       with: {
-        product: true,
+        product: {
+          with: {
+            category: true,
+          },
+        },
       },
     });
 
@@ -286,6 +348,8 @@ export async function getAdminStocks(): Promise<AdminStockSummary[]> {
       productSku: s.product?.sku || "SKU-NONE",
       productImage: s.product?.primaryImage || "/images/placeholder.jpg",
       price: s.product?.price || 0,
+      categoryId: s.product?.categoryId || "uncategorized",
+      categoryName: s.product?.category?.name || "Collection",
       quantity: s.quantity,
       status: s.status,
       label: s.label,
@@ -301,6 +365,8 @@ export async function getAdminStocks(): Promise<AdminStockSummary[]> {
       productSku: p.sku,
       productImage: p.primaryImage,
       price: p.price,
+      categoryId: p.category,
+      categoryName: p.categoryLabel,
       quantity: getFallbackQuantity(p.stockState),
       status: p.stockState.status,
       label: p.stockState.label,

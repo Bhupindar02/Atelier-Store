@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PRODUCTS, Product } from '@/data/fashion-data';
 import { useStore } from '@/context/StoreContext';
+import StockBadge from '@/components/StockBadge';
 
 interface ProductFocusSectionProps {
   initialProducts?: Product[];
@@ -80,6 +81,7 @@ export default function ProductFocusSection({
           {filteredProducts.map((product) => {
             const isHovered = hoveredProductId === product.id;
             const wishlisted = isInWishlist(product.id);
+            const isOutOfStock = product.stockState?.status === 'out_of_stock';
 
             return (
               <div
@@ -89,7 +91,11 @@ export default function ProductFocusSection({
                 onMouseLeave={() => setHoveredProductId(null)}
               >
                 {/* 3:4 Portrait Image Frame */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]/80">
+                <div
+                  className={`relative aspect-[3/4] overflow-hidden bg-[#f2ede6] border border-[#e8e3db]/80 ${
+                    isOutOfStock ? 'opacity-85' : ''
+                  }`}
+                >
                   <Link href={`/products/${product.id}`} className="block absolute inset-0">
                     {/* Primary & Hover Images */}
                     <Image
@@ -98,8 +104,8 @@ export default function ProductFocusSection({
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className={`object-cover transition-opacity duration-700 ease-in-out ${
-                        isHovered ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-                      }`}
+                        isOutOfStock ? 'grayscale-[20%]' : ''
+                      } ${isHovered ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
                     />
                     <Image
                       src={product.secondaryImage}
@@ -107,17 +113,26 @@ export default function ProductFocusSection({
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className={`object-cover transition-all duration-700 ease-in-out ${
-                        isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-                      }`}
+                        isOutOfStock ? 'grayscale-[20%]' : ''
+                      } ${isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'}`}
                     />
                   </Link>
 
-                  {/* Badge */}
-                  {product.badge && (
-                    <div className="absolute top-3 left-3 bg-[#11100e] text-[#f2ede6] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium pointer-events-none">
-                      {product.badge}
-                    </div>
-                  )}
+                  {/* Badges */}
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                    {product.badge && (
+                      <div className="bg-[#11100e] text-[#f2ede6] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium self-start shadow-sm">
+                        {product.badge}
+                      </div>
+                    )}
+                    {product.stockState && (
+                      <StockBadge
+                        status={product.stockState.status}
+                        remaining={product.stockState.remaining}
+                        variant="card-overlay"
+                      />
+                    )}
+                  </div>
 
                   {/* Wishlist Button */}
                   <button
@@ -151,10 +166,15 @@ export default function ProductFocusSection({
                     </button>
                     <button
                       type="button"
-                      onClick={() => addToCart(product)}
-                      className="flex-1 py-2.5 bg-[#1a1714] text-white text-[9px] uppercase tracking-[0.2em] font-medium hover:bg-[#a11826] transition-colors"
+                      onClick={() => !isOutOfStock && addToCart(product)}
+                      disabled={isOutOfStock}
+                      className={`flex-1 py-2.5 text-[9px] uppercase tracking-[0.2em] font-medium transition-colors ${
+                        isOutOfStock
+                          ? 'bg-[#2a2724]/90 text-[#a8a199] cursor-not-allowed'
+                          : 'bg-[#1a1714] text-white hover:bg-[#a11826]'
+                      }`}
                     >
-                      Acquire
+                      {isOutOfStock ? 'Sold Out' : 'Acquire'}
                     </button>
                   </div>
                 </div>
@@ -182,13 +202,27 @@ export default function ProductFocusSection({
                   </p>
 
                   <div className="pt-2 flex items-center justify-between text-[10px] text-[#8e857b] border-t border-[#e8e3db]/60">
-                    <span>{product.color}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{product.color}</span>
+                      {product.stockState && (
+                        <StockBadge
+                          status={product.stockState.status}
+                          remaining={product.stockState.remaining}
+                          variant="pill"
+                        />
+                      )}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => addToCart(product)}
-                      className="text-[#1a1714] uppercase tracking-[0.16em] font-medium hover:text-[#a11826] transition-colors"
+                      onClick={() => !isOutOfStock && addToCart(product)}
+                      disabled={isOutOfStock}
+                      className={`uppercase tracking-[0.16em] font-medium transition-colors ${
+                        isOutOfStock
+                          ? 'text-[#a8a199] cursor-not-allowed'
+                          : 'text-[#1a1714] hover:text-[#a11826]'
+                      }`}
                     >
-                      + Add to Bag
+                      {isOutOfStock ? 'Sold Out' : '+ Add to Bag'}
                     </button>
                   </div>
                 </div>

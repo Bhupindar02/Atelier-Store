@@ -183,10 +183,15 @@ export default function CartPageView() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => addToCart(prod)}
-                      className="mt-4 w-full py-2.5 bg-[#faf9f7] border border-[#d6cfc5] text-[#1a1714] text-[10px] uppercase tracking-[0.2em] font-medium hover:bg-[#1a1714] hover:text-white hover:border-[#1a1714] transition-colors cursor-pointer"
+                      onClick={() => prod.stockState?.status !== 'out_of_stock' && addToCart(prod)}
+                      disabled={prod.stockState?.status === 'out_of_stock'}
+                      className={`mt-4 w-full py-2.5 text-[10px] uppercase tracking-[0.2em] font-medium transition-colors ${
+                        prod.stockState?.status === 'out_of_stock'
+                          ? 'bg-[#e8e3db] text-[#8e857b] cursor-not-allowed'
+                          : 'bg-[#faf9f7] border border-[#d6cfc5] text-[#1a1714] hover:bg-[#1a1714] hover:text-white hover:border-[#1a1714] cursor-pointer'
+                      }`}
                     >
-                      Acquire Creation
+                      {prod.stockState?.status === 'out_of_stock' ? 'Sold Out' : 'Acquire Creation'}
                     </button>
                   </div>
                 ))}
@@ -213,13 +218,16 @@ export default function CartPageView() {
 
               <div className="divide-y divide-[#e8e3db]/80">
                 {cart.map((item, idx) => {
+                  const isOutOfStock = item.maxAvailable <= 0;
                   const isAtMaxStock = item.quantity >= item.maxAvailable;
                   const isLowStock = item.maxAvailable > 0 && item.maxAvailable <= 3;
 
                   return (
                     <div
                       key={`${item.productId}-${item.size}-${idx}`}
-                      className="py-6 first:pt-0 last:pb-0 flex flex-col sm:flex-row gap-6 items-start"
+                      className={`py-6 first:pt-0 last:pb-0 flex flex-col sm:flex-row gap-6 items-start ${
+                        isOutOfStock ? 'opacity-85' : ''
+                      }`}
                     >
                       {/* High-Res Image Thumbnail */}
                       <Link
@@ -231,7 +239,9 @@ export default function CartPageView() {
                           alt={item.product.name}
                           fill
                           sizes="128px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className={`object-cover group-hover:scale-105 transition-transform duration-300 ${
+                            isOutOfStock ? 'grayscale-[20%]' : ''
+                          }`}
                         />
                       </Link>
 
@@ -272,13 +282,19 @@ export default function CartPageView() {
                             Size: <strong className="font-semibold">{item.size || 'Standard'}</strong>
                           </div>
 
-                          {isLowStock && (
+                          {isOutOfStock && (
+                            <span className="px-2 py-0.5 bg-[#fce8e6] text-[#a11826] border border-[#a11826]/30 text-[9px] uppercase tracking-wider font-mono">
+                              Sold Out · Remove from Bag
+                            </span>
+                          )}
+
+                          {!isOutOfStock && isLowStock && (
                             <span className="px-2 py-0.5 bg-[#fef3c7] text-[#92400e] border border-[#f59e0b]/30 text-[9px] uppercase tracking-wider font-mono">
                               Only {item.maxAvailable} Pieces Available
                             </span>
                           )}
 
-                          {isAtMaxStock && (
+                          {!isOutOfStock && isAtMaxStock && (
                             <span className="px-2 py-0.5 bg-[#faf9f7] text-[#787065] border border-[#d6cfc5] text-[9px] uppercase tracking-wider font-mono">
                               Max Allocation Reached
                             </span>
@@ -387,13 +403,23 @@ export default function CartPageView() {
                   )}
                 </div>
 
-                <Link
-                  href="/checkout"
-                  className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors flex items-center justify-center gap-2 text-center"
-                >
-                  <span>Proceed to Secure Checkout</span>
-                  <span className="text-xs">→</span>
-                </Link>
+                {cart.some((item) => item.maxAvailable <= 0) ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-4 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.22em] font-medium cursor-not-allowed flex items-center justify-center gap-2 text-center"
+                  >
+                    <span>Remove Sold Out Creations to Proceed</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/checkout"
+                    className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] transition-colors flex items-center justify-center gap-2 text-center"
+                  >
+                    <span>Proceed to Secure Checkout</span>
+                    <span className="text-xs">→</span>
+                  </Link>
+                )}
 
                 <p className="text-[10px] text-[#8e857b] font-light text-center leading-relaxed">
                   Prices and quantities are verified against the Atelier inventory ledger.

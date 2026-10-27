@@ -427,9 +427,16 @@ export default function CheckoutPageView() {
                       <h4 className="font-serif text-sm font-light text-[#1a1714] truncate">
                         {item.product.name}
                       </h4>
-                      <p className="text-[11px] text-[#787065] font-light">
-                        Size: {item.size || 'One Size'} · Qty: {item.quantity}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px] text-[#787065] font-light">
+                          Size: {item.size || 'One Size'} · Qty: {item.quantity}
+                        </p>
+                        {item.maxAvailable <= 0 && (
+                          <span className="text-[8px] uppercase tracking-wider font-mono px-1.5 py-0.5 bg-[#fce8e6] text-[#a11826] border border-[#a11826]/30">
+                            Sold Out · Please Remove
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="text-right">
@@ -494,25 +501,35 @@ export default function CheckoutPageView() {
               )}
 
               {/* Primary Checkout Action CTA */}
-              <button
-                type="button"
-                id="initiate-stripe-checkout-button"
-                onClick={handleInitiateCheckout}
-                disabled={isCheckingOut || cart.length === 0}
-                className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-sm"
-              >
-                {isCheckingOut ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Connecting to Stripe...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Proceed to Stripe Payment</span>
-                    <span className="text-sm">→</span>
-                  </>
-                )}
-              </button>
+              {cart.some((item) => item.maxAvailable <= 0) ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-4 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.22em] font-medium cursor-not-allowed flex items-center justify-center gap-2.5 shadow-sm"
+                >
+                  <span>Remove Sold Out Pieces to Finalize Acquisition</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  id="initiate-stripe-checkout-button"
+                  onClick={handleInitiateCheckout}
+                  disabled={isCheckingOut || cart.length === 0}
+                  className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.22em] font-medium hover:bg-[#a11826] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-sm"
+                >
+                  {isCheckingOut ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Connecting to Stripe...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Proceed to Stripe Payment</span>
+                      <span className="text-sm">→</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               <div className="text-center space-y-1">
                 <p className="text-[10px] text-[#8e857b] font-light flex items-center justify-center gap-1.5">

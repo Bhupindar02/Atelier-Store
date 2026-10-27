@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
+import StockBadge from '@/components/StockBadge';
 
 export default function ProductQuickView() {
   const {
@@ -51,17 +52,33 @@ export default function ProductQuickView() {
 
           <div className="grid grid-cols-1 md:grid-cols-2">
             {/* Left: Images */}
-            <div className="relative aspect-[3/4] bg-[#f2ede6]">
+            <div className={`relative aspect-[3/4] bg-[#f2ede6] ${isOutOfStock ? 'opacity-90' : ''}`}>
               <Image
                 src={activeImage === 0 ? quickViewProduct.primaryImage : quickViewProduct.secondaryImage}
                 alt={quickViewProduct.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
+                className={`object-cover ${isOutOfStock ? 'grayscale-[20%]' : ''}`}
               />
 
+              {/* Badges */}
+              <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
+                {quickViewProduct.badge && (
+                  <div className="bg-[#11100e] text-[#f2ede6] px-2.5 py-1 text-[8px] tracking-[0.25em] uppercase font-medium self-start shadow-sm">
+                    {quickViewProduct.badge}
+                  </div>
+                )}
+                {quickViewProduct.stockState && (
+                  <StockBadge
+                    status={quickViewProduct.stockState.status}
+                    remaining={quickViewProduct.stockState.remaining}
+                    variant="card-overlay"
+                  />
+                )}
+              </div>
+
               {/* Angle switcher buttons */}
-              <div className="absolute bottom-4 left-4 flex gap-2">
+              <div className="absolute bottom-4 left-4 flex gap-2 z-10">
                 <button
                   type="button"
                   onClick={() => setActiveImage(0)}
@@ -102,6 +119,15 @@ export default function ProductQuickView() {
                 <p className="text-xs text-[#8e857b] tracking-wider uppercase">
                   {quickViewProduct.material} · {quickViewProduct.color}
                 </p>
+
+                {/* Stock Status Banner */}
+                {quickViewProduct.stockState && (
+                  <StockBadge
+                    status={quickViewProduct.stockState.status}
+                    remaining={quickViewProduct.stockState.remaining}
+                    variant="banner"
+                  />
+                )}
 
                 <p className="text-xs text-[#5c544d] font-light leading-relaxed">
                   {quickViewProduct.description}

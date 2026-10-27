@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { SPOTLIGHT_HERO_PRODUCT, Product } from '@/data/fashion-data';
 import { useStore } from '@/context/StoreContext';
+import StockBadge from '@/components/StockBadge';
 
 interface SpotlightProductProps {
   spotlightProduct?: Product;
@@ -27,6 +28,7 @@ export default function SpotlightProduct({ spotlightProduct }: SpotlightProductP
       ];
 
   const wishlisted = isInWishlist(currentHero.id);
+  const isOutOfStock = currentHero.stockState?.status === 'out_of_stock';
 
   return (
     <section id="spotlight" className="py-24 sm:py-32 bg-[#f2ede6] border-b border-[#e8e3db]">
@@ -45,17 +47,26 @@ export default function SpotlightProduct({ spotlightProduct }: SpotlightProductP
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left: Gallery with Large Hero View + Interactive Thumbnails */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="relative aspect-[4/5] overflow-hidden bg-[#e8e3db] border border-[#d8d0c5] shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+            <div className={`relative aspect-[4/5] overflow-hidden bg-[#e8e3db] border border-[#d8d0c5] shadow-[0_20px_50px_rgba(0,0,0,0.08)] ${isOutOfStock ? 'opacity-90' : ''}`}>
               <Image
                 src={images[activeImageIndex]}
                 alt={currentHero.name}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover transition-all duration-700 ease-out"
+                className={`object-cover transition-all duration-700 ease-out ${isOutOfStock ? 'grayscale-[20%]' : ''}`}
               />
-              <div className="absolute top-4 left-4 bg-white/95 px-3 py-1.5 text-[9px] uppercase tracking-[0.25em] font-medium text-[#1a1714]">
-                ARCHIVE REISSUE · N° 1968
+              <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
+                <div className="bg-white/95 px-3 py-1.5 text-[9px] uppercase tracking-[0.25em] font-medium text-[#1a1714] shadow-sm">
+                  ARCHIVE REISSUE · N° 1968
+                </div>
+                {currentHero.stockState && (
+                  <StockBadge
+                    status={currentHero.stockState.status}
+                    remaining={currentHero.stockState.remaining}
+                    variant="card-overlay"
+                  />
+                )}
               </div>
             </div>
 
@@ -114,6 +125,15 @@ export default function SpotlightProduct({ spotlightProduct }: SpotlightProductP
               {currentHero.description}
             </p>
 
+            {/* Stock Status Banner */}
+            {currentHero.stockState && (
+              <StockBadge
+                status={currentHero.stockState.status}
+                remaining={currentHero.stockState.remaining}
+                variant="banner"
+              />
+            )}
+
             {/* Size selection */}
             {currentHero.sizes && (
               <div className="space-y-3">
@@ -156,13 +176,23 @@ export default function SpotlightProduct({ spotlightProduct }: SpotlightProductP
 
             {/* CTAs */}
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => addToCart(currentHero, selectedSize)}
-                className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.24em] font-medium hover:bg-[#a11826] transition-colors duration-300"
-              >
-                Acquire This Creation ({currentHero.formattedPrice})
-              </button>
+              {isOutOfStock ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-4 bg-[#e8e3db] text-[#8e857b] text-[11px] uppercase tracking-[0.24em] font-medium cursor-not-allowed shadow-none"
+                >
+                  Archive Unavailable · Out of Stock
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => addToCart(currentHero, selectedSize)}
+                  className="w-full py-4 bg-[#1a1714] text-white text-[11px] uppercase tracking-[0.24em] font-medium hover:bg-[#a11826] transition-colors duration-300"
+                >
+                  Acquire This Creation ({currentHero.formattedPrice})
+                </button>
+              )}
 
               <div className="flex gap-3">
                 <button

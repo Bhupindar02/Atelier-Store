@@ -73,15 +73,18 @@ export async function POST(request: Request) {
       }
 
       // Determine stock status and max available units
-      let maxAvailable = typeof product.stockState.remaining === 'number'
-        ? product.stockState.remaining
+      const isMadeToOrder = product.stockState?.status === 'made_to_order';
+      let maxAvailable = typeof product.stockState?.remaining === 'number'
+        ? (isMadeToOrder && product.stockState.remaining === 0 ? 5 : product.stockState.remaining)
         : 5;
 
-      const stockStatus: StockStatusType = maxAvailable <= 0
+      const stockStatus: StockStatusType = isMadeToOrder
+        ? 'made_to_order'
+        : maxAvailable <= 0
         ? 'out_of_stock'
         : product.stockState.status;
 
-      if (maxAvailable <= 0) {
+      if (!isMadeToOrder && maxAvailable <= 0) {
         maxAvailable = 0;
       }
 

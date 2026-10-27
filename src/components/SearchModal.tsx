@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PRODUCTS } from '@/data/fashion-data';
 import { useStore } from '@/context/StoreContext';
+import StockBadge from '@/components/StockBadge';
 
 export default function SearchModal() {
   const router = useRouter();
@@ -143,19 +144,23 @@ export default function SearchModal() {
                     {filtered.map((item) => (
                       <div
                         key={item.id}
-                        className="flex gap-4 p-3 bg-white border border-[#e8e3db] hover:border-[#1a1714] transition-all group"
+                        className={`flex gap-4 p-3 bg-white border border-[#e8e3db] hover:border-[#1a1714] transition-all group ${
+                          item.stockState?.status === 'out_of_stock' ? 'opacity-85' : ''
+                        }`}
                       >
                         <Link
                           href={`/products/${item.id}`}
                           onClick={closeSearch}
-                          className="relative w-16 aspect-[3/4] bg-[#f2ede6] flex-shrink-0 block"
+                          className="relative w-16 aspect-[3/4] bg-[#f2ede6] flex-shrink-0 block overflow-hidden"
                         >
                           <Image
                             src={item.primaryImage}
                             alt={item.name}
                             fill
                             sizes="64px"
-                            className="object-cover group-hover:scale-105 transition-transform"
+                            className={`object-cover group-hover:scale-105 transition-transform ${
+                              item.stockState?.status === 'out_of_stock' ? 'grayscale-[20%]' : ''
+                            }`}
                           />
                         </Link>
                         <div className="flex-1 flex flex-col justify-center">
@@ -168,9 +173,18 @@ export default function SearchModal() {
                             </Link>
                           </h4>
                           <div className="flex items-center justify-between pt-1">
-                            <span className="font-mono text-xs font-medium text-[#1a1714]">
-                              {item.formattedPrice}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-medium text-[#1a1714]">
+                                {item.formattedPrice}
+                              </span>
+                              {item.stockState && (
+                                <StockBadge
+                                  status={item.stockState.status}
+                                  remaining={item.stockState.remaining}
+                                  variant="pill"
+                                />
+                              )}
+                            </div>
                             <button
                               type="button"
                               onClick={() => {

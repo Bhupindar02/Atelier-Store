@@ -287,8 +287,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const getMaxAvailable = (productId: string, defaultStock?: number) => {
     const inCartItem = cart.find((i) => i.productId === productId);
     if (inCartItem) return inCartItem.maxAvailable;
+    if (typeof defaultStock === 'number') return defaultStock;
     const prod = PRODUCTS.find((p) => p.id === productId);
-    return prod?.stockState.remaining ?? (defaultStock ?? 5);
+    return prod?.stockState.remaining ?? 5;
   };
 
   // Add To Cart with Stock Enforcement
@@ -298,12 +299,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     requestedQuantity: number = 1
   ): AddToCartResult => {
     const chosenSize = size || (product.sizes?.[0] ?? 'One Size');
-    const maxStock = typeof product.stockState.remaining === 'number'
-      ? product.stockState.remaining
+    const isMadeToOrder = product.stockState?.status === 'made_to_order';
+    const maxStock = typeof product.stockState?.remaining === 'number'
+      ? (isMadeToOrder && product.stockState.remaining === 0 ? 5 : product.stockState.remaining)
       : 5;
 
     // Check if item is out of stock completely
-    if (maxStock <= 0) {
+    if (!isMadeToOrder && maxStock <= 0) {
       return {
         success: false,
         message: `${product.name} is currently out of stock in the Atelier archive.`,
