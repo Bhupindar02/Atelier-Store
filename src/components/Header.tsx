@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
@@ -8,7 +10,7 @@ export default function Header() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === 'admin';
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +18,29 @@ export default function Header() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
+  // Close drawer on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   return (
@@ -45,7 +70,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── MAIN STICKY NAVIGATION ── */}
+      {/* ── MAIN STICKY NAVIGATION BAR ── */}
       <header
         className={`sticky top-0 z-30 transition-all duration-300 ${
           isScrolled
@@ -53,54 +78,30 @@ export default function Header() {
             : 'bg-[#faf9f7] border-b border-[#e8e3db]'
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-[72px] flex items-center justify-between">
-          {/* Mobile Menu Hamburger Toggle */}
-          <div className="flex items-center lg:hidden">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-[72px] relative flex items-center justify-between">
+          {/* Left: Hamburger Menu Trigger (Active across ALL screen sizes) */}
+          <div className="flex-1 flex items-center justify-start">
             <button
               type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 -ml-2 text-[#1a1714] hover:text-[#a11826] transition-colors focus:outline-none"
-              aria-label="Toggle navigation menu"
+              onClick={() => setIsMenuOpen(true)}
+              className="group p-2 -ml-2 text-[#1a1714] hover:text-[#a11826] transition-colors focus:outline-none flex items-center gap-2.5 cursor-pointer"
+              aria-label="Open navigation menu"
+              aria-expanded={isMenuOpen}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-                )}
-              </svg>
+              <div className="w-5 h-3.5 flex flex-col justify-between py-0.5" aria-hidden="true">
+                <span className="w-5 h-[1.5px] bg-current transition-all duration-200" />
+                <span className="w-3.5 h-[1.5px] bg-current transition-all duration-200 group-hover:w-5" />
+                <span className="w-5 h-[1.5px] bg-current transition-all duration-200" />
+              </div>
+              <span className="text-[10px] tracking-[0.22em] uppercase font-medium text-[#1a1714] group-hover:text-[#a11826] transition-colors hidden sm:inline">
+                Menu
+              </span>
             </button>
           </div>
 
-          {/* Desktop Left Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-[11px] uppercase tracking-[0.18em] font-medium text-[#3a3530]">
-            <Link
-              href="/new-arrivals"
-              className="text-[#a11826] font-semibold hover:opacity-80 transition-opacity flex items-center gap-1.5"
-            >
-              <span>New Arrivals</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#a11826]" />
-            </Link>
-            <Link href="/collections" className="hover:text-[#a11826] transition-colors">
-              Collections
-            </Link>
-            <Link href="/collections/handbags" className="hover:text-[#a11826] transition-colors">
-              Maroquinerie
-            </Link>
-            <Link href="/collections/tailoring" className="hover:text-[#a11826] transition-colors">
-              Prêt-à-Porter
-            </Link>
-            <Link href="/#spotlight" className="hover:text-[#a11826] transition-colors">
-              Masterpiece
-            </Link>
-            <Link href="/#editorial" className="hover:text-[#a11826] transition-colors">
-              Journal
-            </Link>
-          </nav>
-
-          {/* Center Brand Identity (Gucci / Saint Laurent inspired wordmark) */}
-          <div className="text-center flex-1 lg:flex-initial">
-            <Link href="/" className="inline-block group">
+          {/* Center Brand Identity: Perfectly Centered on ALL Screen Sizes */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-auto">
+            <Link href="/" className="inline-block group focus:outline-none">
               <span className="font-serif text-2xl sm:text-3xl tracking-[0.28em] font-light text-[#1a1714] block leading-none">
                 ATELIER
               </span>
@@ -110,13 +111,13 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Right Utilities (Search, Wishlist, Bag) */}
-          <div className="flex items-center gap-3 sm:gap-5 text-[#1a1714]">
+          {/* Right Utilities (Search, Wishlist, Client Account, Bag) */}
+          <div className="flex-1 flex items-center justify-end gap-1.5 sm:gap-3 md:gap-4 lg:gap-5 text-[#1a1714]">
             {/* Search Button */}
             <button
               type="button"
               onClick={openSearch}
-              className="p-2 hover:text-[#a11826] transition-colors flex items-center gap-1.5 focus:outline-none"
+              className="p-2 hover:text-[#a11826] transition-colors flex items-center gap-1.5 focus:outline-none cursor-pointer"
               aria-label="Search collection"
             >
               <svg className="w-4 h-4 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +132,7 @@ export default function Header() {
             {/* Wishlist Link / Counter */}
             <a
               href="#products"
-              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center"
+              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center focus:outline-none cursor-pointer"
               aria-label="Wishlist items"
             >
               <svg className="w-4 h-4 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +152,7 @@ export default function Header() {
             {/* Client Account Link */}
             <Link
               href="/account"
-              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center gap-1.5 focus:outline-none"
+              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center gap-1.5 focus:outline-none cursor-pointer"
               aria-label="Client Account"
             >
               <svg className="w-4 h-4 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,8 +166,8 @@ export default function Header() {
             {/* Admin Console Shortcut */}
             {isAdmin && (
               <Link
-                href="/admin/products"
-                className="p-2 text-[#8c6b2d] hover:text-[#1a1714] transition-colors relative flex items-center gap-1.5 focus:outline-none"
+                href="/admin"
+                className="p-2 text-[#8c6b2d] hover:text-[#1a1714] transition-colors relative flex items-center gap-1.5 focus:outline-none cursor-pointer"
                 aria-label="Admin Console"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#d4af6a] animate-pulse" />
@@ -180,7 +181,7 @@ export default function Header() {
             <button
               type="button"
               onClick={openCart}
-              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center gap-1.5 focus:outline-none"
+              className="p-2 hover:text-[#a11826] transition-colors relative flex items-center gap-1.5 focus:outline-none cursor-pointer"
               aria-label="View shopping bag"
             >
               <svg className="w-4 h-4 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,125 +200,230 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ── MOBILE SLIDE-OUT MENU DRAWER ── */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/60 transition-opacity"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
+      {/* ── LUXURY HAMBURGER NAVIGATION DRAWER (Available on all screens) ── */}
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-300 ${
+          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+          onClick={() => setIsMenuOpen(false)}
+          aria-hidden="true"
+        />
 
-          {/* Drawer content */}
-          <div className="relative w-full max-w-[340px] bg-[#faf9f7] h-full shadow-2xl flex flex-col p-6 z-10 overflow-y-auto">
-            <div className="flex items-center justify-between pb-6 border-b border-[#e8e3db]">
-              <span className="font-serif text-xl tracking-[0.2em] font-light text-[#1a1714]">
+        {/* Slide-in Drawer Container */}
+        <aside
+          className={`fixed top-0 bottom-0 left-0 w-full max-w-[380px] sm:max-w-[420px] bg-[#faf9f7] shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-out border-r border-[#e8e3db] ${
+            isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          aria-label="Main navigation menu"
+        >
+          {/* Drawer Top Header */}
+          <div className="flex items-center justify-between p-6 sm:p-8 border-b border-[#e8e3db] bg-white">
+            <Link
+              href="/"
+              onClick={() => setIsMenuOpen(false)}
+              className="inline-block group"
+            >
+              <span className="font-serif text-xl tracking-[0.25em] font-light text-[#1a1714] block leading-none">
                 ATELIER
               </span>
-              <button
-                type="button"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 text-[#1a1714] hover:text-[#a11826]"
-                aria-label="Close menu"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+              <span className="font-sans text-[7px] tracking-[0.4em] text-[#8e857b] uppercase mt-1 block">
+                HAUTE COUTURE
+              </span>
+            </Link>
 
-            <div className="py-6 flex flex-col gap-4 text-xs tracking-[0.18em] uppercase font-medium text-[#1a1714]">
-              <Link
-                href="/new-arrivals"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2.5 border-b border-[#e8e3db]/80 text-[#a11826] font-semibold flex items-center justify-between"
-              >
-                <span>New Arrivals</span>
-                <span className="text-[9px] px-2 py-0.5 bg-[#a11826]/10 text-[#a11826] font-mono tracking-widest">
-                  2026 DEBUT
-                </span>
-              </Link>
-              <Link
-                href="/account"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2.5 border-b border-[#e8e3db]/80 hover:text-[#a11826] transition-colors flex items-center justify-between"
-              >
-                <span>Client Portfolio</span>
-                <span className="text-[9px] px-2 py-0.5 bg-[#1a1714] text-white font-mono tracking-wider">
-                  ACCOUNT
-                </span>
-              </Link>
-              {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(false)}
+              className="p-2 text-[#1a1714] hover:text-[#a11826] transition-colors flex items-center gap-1.5 focus:outline-none cursor-pointer"
+              aria-label="Close menu"
+            >
+              <span className="text-[10px] tracking-[0.2em] uppercase font-medium hidden sm:inline">
+                Close
+              </span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Drawer Navigation Links */}
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8">
+            {/* Primary Category & Collection Links (Original Left-Side Items) */}
+            <div className="space-y-1">
+              <span className="text-[9px] uppercase tracking-[0.3em] font-semibold text-[#8e857b] block mb-3">
+                COLLECTIONS & RUNWAY
+              </span>
+
+              <nav className="flex flex-col space-y-1">
+                {/* New Arrivals */}
                 <Link
-                  href="/admin/products"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-2.5 border-b border-[#e8e3db]/80 text-[#8c6b2d] font-semibold flex items-center justify-between"
+                  href="/new-arrivals"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#a11826] font-medium flex items-center justify-between hover:bg-white transition-colors group"
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#d4af6a] animate-pulse" />
-                    <span>Admin Console</span>
-                  </span>
-                  <span className="text-[9px] px-2 py-0.5 bg-[#d4af6a]/15 text-[#8c6b2d] border border-[#d4af6a]/40 font-mono tracking-wider">
-                    CONSOLE
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#a11826]" />
+                    <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                      New Arrivals
+                    </span>
+                  </div>
+                  <span className="text-[8px] uppercase tracking-[0.25em] px-2 py-0.5 bg-[#a11826]/10 text-[#a11826] font-mono">
+                    2026 DEBUT
                   </span>
                 </Link>
-              )}
-              <Link
-                href="/collections"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Featured Collections
-              </Link>
-              <Link
-                href="/collections/handbags"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Leather Goods
-              </Link>
-              <Link
-                href="/collections/tailoring"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Tailoring & Ready-to-Wear
-              </Link>
-              <Link
-                href="/#spotlight"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Masterpiece Spotlight
-              </Link>
-              <Link
-                href="/#editorial"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Atelier Journal
-              </Link>
-              <Link
-                href="/#concierge"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 border-b border-[#e8e3db]/60 hover:text-[#a11826] transition-colors"
-              >
-                Client Services & Boutiques
-              </Link>
+
+                {/* Collections */}
+                <Link
+                  href="/collections"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors group"
+                >
+                  <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                    All Collections
+                  </span>
+                  <span className="text-xs text-[#8e857b] font-light">→</span>
+                </Link>
+
+                {/* Maroquinerie (Handbags & Leather) */}
+                <Link
+                  href="/collections/handbags"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors group"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                      Maroquinerie
+                    </span>
+                    <span className="text-[9px] text-[#8e857b] tracking-wider uppercase">
+                      Handcrafted Leather Goods & Totes
+                    </span>
+                  </div>
+                  <span className="text-xs text-[#8e857b] font-light">→</span>
+                </Link>
+
+                {/* Prêt-à-Porter */}
+                <Link
+                  href="/collections/tailoring"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors group"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                      Prêt-à-Porter
+                    </span>
+                    <span className="text-[9px] text-[#8e857b] tracking-wider uppercase">
+                      Bespoke Tailoring & Silhouettes
+                    </span>
+                  </div>
+                  <span className="text-xs text-[#8e857b] font-light">→</span>
+                </Link>
+
+                {/* Masterpiece Focus */}
+                <Link
+                  href="/#spotlight"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#d4af6a] text-xs">✦</span>
+                    <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                      Masterpiece Focus
+                    </span>
+                  </div>
+                  <span className="text-[8px] tracking-[0.2em] uppercase text-[#8e857b]">
+                    SAVOIR-FAIRE
+                  </span>
+                </Link>
+
+                {/* Atelier Journal */}
+                <Link
+                  href="/#editorial"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 -mx-3 border-b border-[#e8e3db]/60 text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors group"
+                >
+                  <span className="font-serif text-lg tracking-wide group-hover:translate-x-1 transition-transform">
+                    Atelier Journal
+                  </span>
+                  <span className="text-[8px] tracking-[0.2em] uppercase text-[#8e857b]">
+                    EDITORIALS
+                  </span>
+                </Link>
+              </nav>
             </div>
 
-            <div className="mt-auto pt-6 border-t border-[#e8e3db] text-xs text-[#8e857b] space-y-3">
-              <p className="tracking-widest uppercase font-medium text-[#1a1714]">Personal Concierge</p>
-              <p>+33 (0)1 42 68 00 00</p>
-              <p>concierge@maison-atelier.com</p>
-              <div className="pt-4 flex gap-4 text-[10px] tracking-[0.2em] uppercase">
-                <span>EN (US)</span>
-                <span>USD ($)</span>
+            {/* Client Portfolio & Services */}
+            <div className="space-y-3 pt-2">
+              <span className="text-[9px] uppercase tracking-[0.3em] font-semibold text-[#8e857b] block">
+                CLIENT SERVICES & SALONS
+              </span>
+
+              <div className="space-y-1.5 text-xs">
+                <Link
+                  href="/account"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-2.5 px-3 -mx-3 rounded-none text-[#1a1714] hover:text-[#a11826] hover:bg-white flex items-center justify-between transition-colors"
+                >
+                  <span className="tracking-wider uppercase font-medium">
+                    {session?.user ? 'Client Portfolio' : 'Client Identification / Sign In'}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-[#1a1714] text-white font-mono tracking-wider">
+                    {session?.user ? 'AUTHENTICATED' : 'ACCOUNT'}
+                  </span>
+                </Link>
+
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="py-2.5 px-3 -mx-3 rounded-none text-[#8c6b2d] hover:bg-[#d4af6a]/10 flex items-center justify-between transition-colors border-l-2 border-[#d4af6a]"
+                  >
+                    <span className="tracking-wider uppercase font-semibold flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#d4af6a] animate-pulse" />
+                      <span>Admin Management Console</span>
+                    </span>
+                    <span className="text-[8px] px-2 py-0.5 bg-[#d4af6a]/20 text-[#8c6b2d] font-mono font-medium">
+                      ADMIN
+                    </span>
+                  </Link>
+                )}
+
+                <Link
+                  href="/#concierge"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-2.5 px-3 -mx-3 text-[#5c544d] hover:text-[#1a1714] hover:bg-white flex items-center justify-between transition-colors"
+                >
+                  <span className="tracking-wider uppercase font-medium">
+                    Private Salon Appointments & Inquiries
+                  </span>
+                  <span className="text-xs">→</span>
+                </Link>
               </div>
             </div>
           </div>
-        </div>
-      )}
+
+          {/* Drawer Bottom Concierge Footer */}
+          <div className="p-6 sm:p-8 border-t border-[#e8e3db] bg-white space-y-3">
+            <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.25em] text-[#8e857b]">
+              <span>PERSONAL CONCIERGE</span>
+              <span>PARIS · NYC · FIRENZE</span>
+            </div>
+            <div className="text-xs text-[#1a1714] space-y-1">
+              <p className="font-mono text-[11px]">+33 (0)1 42 68 00 00</p>
+              <p className="text-[#787065] text-[11px]">concierge@maison-atelier.com</p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-[9px] tracking-[0.2em] uppercase text-[#8e857b] border-t border-[#e8e3db]/60">
+              <span>EN (GLOBAL)</span>
+              <span>USD ($)</span>
+              <span>WHITE-GLOVE INCLUDED</span>
+            </div>
+          </div>
+        </aside>
+      </div>
     </>
   );
 }
+
